@@ -1,10 +1,9 @@
-package com.bestv.pgc.media.player;
+package com.bestv.pgc.player;
 
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.bestv.pgc.media.listener.MediaEngineInterface;
 
 import java.io.IOException;
 

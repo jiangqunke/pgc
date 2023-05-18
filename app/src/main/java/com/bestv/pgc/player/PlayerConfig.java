@@ -1,4 +1,4 @@
-package com.bestv.pgc.media.player;
+package com.bestv.pgc.player;
 
 
 /**
@@ -50,6 +50,7 @@ public class PlayerConfig {
         }
 
         /**
+         * 添加到{@link VideoViewManager},如需集成到RecyclerView或ListView请开启此选项
          */
         public Builder addToPlayerManager() {
             target.addToPlayerManager = true;

@@ -1,10 +1,9 @@
-package com.bestv.pgc.media;
+package com.bestv.pgc.player;
 
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
-import com.bestv.pgc.media.player.IjkVideoView;
 
 
 /**
@@ -51,18 +50,18 @@ public class ResizeTextureView extends TextureView {
 
         //如果设置了比例
         switch (screenType) {
-            case IjkVideoView.SCREEN_SCALE_ORIGINAL:
+            case ExoVideoView.SCREEN_SCALE_ORIGINAL:
                 width = mVideoWidth;
                 height = mVideoHeight;
                 break;
-            case IjkVideoView.SCREEN_SCALE_16_9:
+            case ExoVideoView.SCREEN_SCALE_16_9:
                 if (height > width / 16 * 9) {
                     height = width / 16 * 9;
                 } else {
                     width = height / 9 * 16;
                 }
                 break;
-            case IjkVideoView.SCREEN_SCALE_4_3:
+            case ExoVideoView.SCREEN_SCALE_4_3:
                 if (height > width / 4 * 3) {
                     height = width / 4 * 3;
                 } else {
@@ -70,11 +69,11 @@ public class ResizeTextureView extends TextureView {
                 }
 //                Log.d("@@@@", "onMeasure 4:3 : width" + width + "    height:" + height);
                 break;
-            case IjkVideoView.SCREEN_SCALE_MATCH_PARENT:
+            case ExoVideoView.SCREEN_SCALE_MATCH_PARENT:
                 width = widthMeasureSpec;
                 height = heightMeasureSpec;
                 break;
-            case IjkVideoView.SCREEN_SCALE_HEIGHT:
+            case ExoVideoView.SCREEN_SCALE_HEIGHT:
                 if (mVideoWidth > 0 && mVideoHeight > 0) {
                     width = mVideoWidth*width/mVideoHeight;
                     height =heightMeasureSpec;

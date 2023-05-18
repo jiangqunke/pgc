@@ -1,4 +1,4 @@
-package com.bestv.pgc.media.utils;
+package com.bestv.pgc.player;
 
 import android.app.Activity;
 import android.content.Context;
@@ -103,7 +103,7 @@ public class SystemUtils {
     }
 
     //设置系统当前音量
-    public static void setSystemVolume(Context context, int index) {
+    public static void setSystemVolume(Context context,int index) {
         AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         am.setStreamVolume(AudioManager.STREAM_MUSIC,index, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
     }

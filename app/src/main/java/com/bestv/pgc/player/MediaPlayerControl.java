@@ -1,4 +1,4 @@
-package com.bestv.pgc.media.listener;
+package com.bestv.pgc.player;
 
 public interface MediaPlayerControl {
     void start();
