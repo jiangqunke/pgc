@@ -399,6 +399,7 @@ public class ExoVideoView extends FrameLayout implements MediaPlayerControl, Med
         mMediaPlayer.setEnableMediaCodec(mPlayerConfig.enableMediaCodec);
         startPrepare(false);
     }
+
     public void stopPlayback() {
         release();
     }

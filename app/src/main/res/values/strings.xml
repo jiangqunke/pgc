@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">pgc</string>
+    <string name="net_error">网络错误</string>
+    <string name="xrefreshview_footer_hint_click">点击加载更多</string>
+    <string name="xrefreshview_footer_hint_complete">已无更多数据</string>
+    <string name="social_contract">收起</string>
+
+    <string name="social_expend">展开</string>
+
+    <string name="social_text_target">网页链接</string>
 </resources>

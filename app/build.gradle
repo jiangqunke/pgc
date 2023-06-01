@@ -1,13 +1,14 @@
-apply plugin: 'com.android.application'
-//apply plugin: 'com.android.library'
-//apply plugin: 'com.kezong.fat-aar'
+//apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
+apply plugin: 'com.kezong.fat-aar'
+apply plugin: 'kotlin-android'
 android {
-    compileSdkVersion 33
+    compileSdkVersion 32
 
     defaultConfig {
-        applicationId "com.bestv.pgc"
-        minSdkVersion 23
-        targetSdkVersion 33
+//        applicationId "com.bestv.pgc"
+        minSdkVersion 21
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
         ndk {
@@ -29,10 +30,37 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    signingConfigs {
+        debug {
+            storeFile file("../app/bestv.keystore")
+            storePassword "bestv001!"
+            keyAlias "bestv"
+            keyPassword "bestv001!"
+        }
+        //正式专用 不然正式支付通不了
+        release {
+            storeFile file("../app/bestv.keystore")
+            storePassword "bestv001!"
+            keyAlias "bestv"
+            keyPassword "bestv001!"
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            zipAlignEnabled true
+            aaptOptions.cruncherEnabled = true
+            aaptOptions.useNewCruncher = true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            zipAlignEnabled true
+            aaptOptions.cruncherEnabled = true
+            aaptOptions.useNewCruncher = true
+            signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -42,18 +70,20 @@ repositories {
     }
 }
 dependencies {
+//    implementation  fileTree(dir: "libs", include: ["*.jar","*.aar"])
     implementation  fileTree(dir: "libs", include: ["*.jar","*.aar"])
-//    compileOnly  fileTree(dir: "libs", include: ["*.jar","*.aar"])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-//    implementation  (name:'ijkplayer-arm64-release', ext:'aar')
-//    implementation  (name:'ijkplayer-armv7a-release', ext:'aar')
-//    implementation  (name:'ijkplayer-java-release', ext:'aar')
-//    implementation  (name:'ijkplayer-vr-release', ext:'aar')
-    implementation 'com.google.android.exoplayer:exoplayer:2.11.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+    api 'com.google.android.exoplayer:exoplayer:2.11.3'
+    api 'com.squareup.okhttp3:okhttp:4.9.0'
+    api 'androidx.recyclerview:recyclerview:1.1.0'
+    api 'com.google.code.gson:gson:2.8.5'
+    api 'com.github.bumptech.glide:glide:4.11.0'
+//    api 'com.blankj:utilcode:1.29.0'
+    embed  'com.blankj:utilcode:1.29.0'
 }
 
 

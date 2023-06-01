@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/speed_red_1"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_3"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_5"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_7"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_9"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_11"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_13"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_15"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_17"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_19"
+        android:duration="50" />
+    <item
+        android:drawable="@drawable/speed_red_21"
+        android:duration="50" />
+</animation-list>

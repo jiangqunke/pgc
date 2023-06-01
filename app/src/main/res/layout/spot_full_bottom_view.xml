@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:id="@+id/rl_bottom"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+
+            android:id="@+id/ll_progress_flag"
+            android:layout_marginLeft="@dimen/dp_40"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/dp_40"
+            android:gravity="left"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_gravity="center"
+                android:id="@+id/flag_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="01:00"
+                android:gravity="center"
+                android:textColor="#ED0022"
+                android:textSize="@dimen/dp_25" />
+
+            <TextView
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/dp_5"
+                android:layout_marginRight="@dimen/dp_5"
+                android:text="/"
+                android:textColor="@color/title_unselect_adult"
+                android:textSize="@dimen/dp_12" />
+
+            <TextView
+                android:layout_gravity="center"
+                android:id="@+id/flag_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="03:00"
+                android:textColor="@color/title_unselect_adult"
+                android:textSize="@dimen/dp_18" />
+        </LinearLayout>
+
+
+        <RelativeLayout
+            android:id="@+id/rl_progress"
+            android:layout_below="@+id/ll_progress_flag"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_43"
+            android:background="@drawable/shape_gradient_video_bottom">
+
+            <LinearLayout
+                android:id="@+id/ll_progress"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/dp_30"
+                android:layout_marginBottom="@dimen/dp_20"
+                android:gravity="bottom"
+                android:orientation="horizontal"
+                android:paddingLeft="@dimen/dp_20"
+                android:paddingRight="@dimen/dp_20"
+                android:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/iv_play"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:paddingRight="@dimen/dp_10"
+                    android:src="@mipmap/ic_video_portrait_pause" />
+
+                <TextView
+                    android:id="@+id/tv_progress_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dp_12" />
+
+                <RelativeLayout
+                    android:id="@+id/rl_seekbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="@dimen/dp_5"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:paddingTop="@dimen/dp_3">
+
+                    <com.bestv.pgc.ui.view.CustomSeekBar
+                        android:id="@+id/seekbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:max="100"
+                        android:maxHeight="3dp"
+                        android:minHeight="3dp"
+                        android:padding="0dp"
+                        android:paddingStart="@dimen/dp_8"
+                        android:paddingEnd="@dimen/dp_8"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/seekbar_shape"
+                        android:thumb="@drawable/shape_seekbar_btn" />
+
+
+                </RelativeLayout>
+
+
+                <TextView
+                    android:id="@+id/tv_total_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dp_12" />
+
+                <TextView
+                    android:id="@+id/tv_speed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginLeft="@dimen/dp_20"
+                    android:background="@drawable/shape_player_resolution"
+                    android:gravity="center"
+                    android:padding="@dimen/dp_3"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="3.0"
+                    android:text="倍速"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dp_12" />
+            </LinearLayout>
+
+        </RelativeLayout>
+
+
+
+    </RelativeLayout>
+
+
+
+</RelativeLayout>

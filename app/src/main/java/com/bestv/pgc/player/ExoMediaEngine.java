@@ -11,6 +11,7 @@ import android.view.SurfaceHolder;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
@@ -109,7 +110,7 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
     @Override
     public void reset() {
         if (mMediaPlayer != null) {
-            mMediaPlayer.stop(true);
+            mMediaPlayer.stop(false);
         }
     }
 
@@ -138,28 +139,33 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
 
     @Override
     public void release() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.removeListener(this);
-            mMediaPlayer.removeVideoListener(this);
-            final SimpleExoPlayer player = mMediaPlayer;
-            new Thread() {
-                @Override
-                public void run() {
-                    //异步释放，防止卡顿
-                    player.release();
-                }
-            }.start();
-            mMediaPlayer = null;
+        try {
+            if (mMediaPlayer != null) {
+                mMediaPlayer.removeListener(this);
+                mMediaPlayer.removeVideoListener(this);
+                final SimpleExoPlayer player = mMediaPlayer;
+                new Thread() {
+                    @Override
+                    public void run() {
+                        //异步释放，防止卡顿
+                        player.release();
+                    }
+                }.start();
+                mMediaPlayer = null;
+            }
+
+            mHandler.removeCallbacksAndMessages(null);
+
+            mSurface = null;
+            mIsPreparing = false;
+            mIsBuffering = false;
+            mLastReportedPlaybackState = Player.STATE_IDLE;
+            mLastReportedPlayWhenReady = false;
+            mSpeedPlaybackParameters = null;
+        }catch (Exception e){
+            e.printStackTrace();
         }
 
-        mHandler.removeCallbacksAndMessages(null);
-
-        mSurface = null;
-        mIsPreparing = false;
-        mIsBuffering = false;
-        mLastReportedPlaybackState = Player.STATE_IDLE;
-        mLastReportedPlayWhenReady = false;
-        mSpeedPlaybackParameters = null;
     }
 
     @Override

@@ -8,19 +8,14 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:usesCleartextTraffic="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.MainActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize|locale|fontScale|layoutDirection"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTask"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <activity
+            android:name=".ui.PlaylistActivity"
+            android:configChanges="mcc|mnc|orientation|keyboardHidden|screenSize|locale|fontScale|layoutDirection|uiMode"
+            android:launchMode="standard"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
