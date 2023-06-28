@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.analysys.AnalysysAgent;
 import com.bestv.pgc.R;
 import com.bestv.pgc.beans.FunctionSpeedModel;
 import com.bestv.pgc.beans.SpotBean;
@@ -32,6 +33,7 @@ import com.bestv.pgc.player.AbstractPlayer;
 import com.bestv.pgc.player.ExoVideoView;
 import com.bestv.pgc.player.SystemUtils;
 import com.bestv.pgc.player.VideoListener;
+import com.bestv.pgc.ui.PlaylistActivity;
 import com.bestv.pgc.ui.SpeedAdapter;
 import com.bestv.pgc.util.NiceUtil;
 import com.bestv.pgc.util.PlayerCountTimer;
@@ -44,9 +46,12 @@ import com.blankj.utilcode.util.ToastUtils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PlayViewControl extends RelativeLayout implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, VideoListener {
     private Context context;
@@ -104,6 +109,16 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
     private SpeedAdapter speedAdapter;
     private ExpandableTextView tv_expand;
     private LinearLayout ll_praise;
+
+
+
+    public long getPlay_length() {
+        return play_length;
+    }
+
+    public void setPlay_length(long play_length) {
+        this.play_length = play_length;
+    }
     public InterceptTouchListening getInterceptTouchListening() {
         return interceptTouchListening;
     }
@@ -151,7 +166,7 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
 
     public void resetSeekProgress() {
         setSeekProgress(0);
-//        stopPlayTimer();
+        stopPlayTimer();
     }
 
     public PlayViewControl(Context context) {
@@ -181,7 +196,8 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
     private void init() {
         View root = LayoutInflater.from(getContext()).inflate(R.layout.pgc_view_control_layout, this);
         videoView = root.findViewById(R.id.video_view);
-        videoView.setScreenScale(ExoVideoView.SCREEN_SCALE_MATCH_PARENT);
+//        videoView.setScreenScale(ExoVideoView.SCREEN_SCALE_MATCH_PARENT);
+        videoView.setLooping(true);
         iv_expand = root.findViewById(R.id.iv_expand);
         ll_praise = root.findViewById(R.id.ll_praise);
         iv_bg = root.findViewById(R.id.iv_bg);
@@ -285,7 +301,7 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
                 return false;
             }
         });
-//        initPlayTimer();
+        initPlayTimer();
         cutVolume = SystemUtils.getSystemCurrentVolume(getContext());
     }
 
@@ -552,19 +568,19 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
         switch (what) {
             case AbstractPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
                 iv_bg.setVisibility(GONE);
-//                startPlayTimer();
+                startPlayTimer();
                 if (!isFragmentVisible) {
                     videoView.pause();
-//                    pausePlayTimer();
+                    pausePlayTimer();
                 }
                 break;
             case AbstractPlayer.MEDIA_INFO_BUFFERING_START:
                 animator_iv.setVisibility(VISIBLE);
-//                pausePlayTimer();
+                pausePlayTimer();
                 break;
             case AbstractPlayer.MEDIA_INFO_BUFFERING_END:
                 animator_iv.setVisibility(GONE);
-//                resumePlayTimer();
+                resumePlayTimer();
                 break;
         }
     }
@@ -911,7 +927,7 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
             if (isNeedFullScreenVideo()) {
                 iv_full.setVisibility(GONE);
             }
-//            pausePlayTimer();
+            pausePlayTimer();
             pausedCallBack.playerPaused(true);
             iconPause.setVisibility(View.VISIBLE);
             seekbar.setProgressDrawable(ContextCompat.getDrawable(context, R.drawable.seekbar_shape_spot_select));
@@ -933,7 +949,7 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
             seekbar.setProgressDrawable(ContextCompat.getDrawable(context, R.drawable.seekbar_shape_spot));
             isPlaying = true;
             videoView.resume();
-//            resumePlayTimer();
+            resumePlayTimer();
             ll_praise.setVisibility(VISIBLE);
             pausedCallBack.playerPaused(false);
             iconPause.setVisibility(View.GONE);
@@ -970,6 +986,7 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
         } else {
             tv_praise.setText("点赞");
         }
+        userLike(isPraise);
     }
 
     public void updateView() {
@@ -1085,54 +1102,6 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
         }
         return false;
     }
-//
-//    public void startPlayTimer() {
-//        if (countTimer != null) {
-//            countTimer.start();
-//        }
-//    }
-//
-//    public void pausePlayTimer() {
-//        if (countTimer != null) {
-//            countTimer.pause();
-//        }
-//    }
-//
-//    public void resumePlayTimer() {
-//        if (countTimer != null) {
-//            countTimer.resume();
-//        }
-//    }
-//
-//    public void stopPlayTimer() {
-//        if (countTimer != null) {
-//            countTimer.cancel();
-//        }
-//    }
-
-//    //启动定时器
-//    public void initPlayTimer() {
-//        if (countTimer != null) {
-//            countTimer.cancel();
-//        }
-//        countTimer = new PlayerCountTimer(1000) {
-//            @Override
-//            protected void onCancel(long millisFly) {
-//                super.onCancel(millisFly);
-//                play_length = millisFly;
-//            }
-//
-//            @Override
-//            protected void onTick(long millisFly) {
-//                super.onTick(millisFly);
-//                play_length = millisFly;
-//                Log.e("playtime", "playtime=" + millisFly);
-//                int count = (int) (millisFly / 1000);
-//                if (count % 5 == 0) {
-//                }
-//            }
-//        };
-//    }
 
     //是否显示全屏
     private void showOrHideFullScreen(boolean isFullscreen) {
@@ -1276,7 +1245,6 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
 
     public interface OnFinishListening {
         public void finishSteepPage();
-
         public void hideOrShowTopBottomView(boolean isHide, PlayViewControl videoView, SpotBean data);
     }
 
@@ -1296,5 +1264,66 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
 
 
     }
+
+    //埋点-用户点赞
+    private void userLike(boolean isParise){
+        Map<String, Object> map = new HashMap<>();
+        map.put("$url", PlaylistActivity.class.getName());
+        map.put("$url_domain",  PlaylistActivity.class.getName());
+        map.put("$title",  "Metro大都会播放页");
+        map.put("tab",  "0");
+        map.put("gerneral_type",  "单片视频");
+        map.put("gerneral_id",  TextUtils.isEmpty(data.getTitleId())?"0":data.getTitleId());
+        map.put("gerneral_name",  TextUtils.isEmpty(data.getTitle())?"0":data.getTitle());
+        map.put("action", isParise? "点赞":"取消点赞");
+        Log.e("isParise_video", "isParise_video" + new Gson().toJson(map));
+        AnalysysAgent.track(context, "user_like", map);
+    }
+
+    public void startPlayTimer() {
+        if (countTimer != null) {
+            countTimer.start();
+        }
+    }
+
+    public void pausePlayTimer() {
+        if (countTimer != null) {
+            countTimer.pause();
+        }
+    }
+
+    public void resumePlayTimer() {
+        if (countTimer != null) {
+            countTimer.resume();
+        }
+    }
+
+    public void stopPlayTimer() {
+        if (countTimer != null) {
+            countTimer.cancel();
+        }
+    }
+
+    //启动定时器
+    public void initPlayTimer() {
+        if (countTimer != null) {
+            countTimer.cancel();
+        }
+        countTimer = new PlayerCountTimer(1000) {
+            @Override
+            protected void onCancel(long millisFly) {
+                super.onCancel(millisFly);
+                play_length = millisFly;
+            }
+
+            @Override
+            protected void onTick(long millisFly) {
+                super.onTick(millisFly);
+                play_length = millisFly;
+                Log.e("playtime", "playtime=" + millisFly);
+            }
+        };
+    }
+
 
 }

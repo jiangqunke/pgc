@@ -37,7 +37,8 @@
 
 #优化时允许访问并修改有修饰符的类和类的成员
 -allowaccessmodification
-
+-keeppackagenames doNotKeepAThing
+-repackageclasses 'com.bestv'
 #-repackageclasses com.repeat
 
 -renamesourcefileattribute SourceFile
@@ -171,3 +172,5 @@
     -keep class com.andview.refreshview.** { *; }
 
      -keep class com.bestv.pgc.util.BestvAgent{ *; }
+
+          -keep class com.bestv.pgc.util.OnPariseListening{ *; }

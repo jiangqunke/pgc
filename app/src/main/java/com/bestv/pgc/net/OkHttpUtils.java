@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.bestv.pgc.util.BestvAgent;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -110,6 +111,7 @@ public final class OkHttpUtils {
         mHttpClient = createHttpUtils();
         mGson = new Gson();
         mHandler = new Handler(Looper.getMainLooper());
+        DEBUG =! BestvAgent.getInstance().isOficial();
     }
 
     /**
@@ -256,9 +258,11 @@ public final class OkHttpUtils {
      * @param callBack 回调
      */
     public static void post(String url, Map<String, Object> params, OnResultCallBack callBack) {
-        Log.d(TAG, "the request url-->" + url);
         String jsonParam = new Gson().toJson(params);
-        Log.d(TAG, "the request params-->" + jsonParam);
+        if (DEBUG){
+            Log.d(TAG, "the request url-->" + url);
+            Log.d(TAG, "the request params-->" + jsonParam);
+        }
         OkHttpUtils.getInstance().sendPostRequstNoKey(url, jsonParam, null, callBack, false);
     }
 

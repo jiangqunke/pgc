@@ -198,7 +198,7 @@ public class ExoVideoView extends FrameLayout implements MediaPlayerControl, Med
     @Override
     public void onError() {
         try {
-            if (isResetCount<=2 && mMediaPlayer != null){
+            if (isResetCount<=10 && mMediaPlayer != null){
                 mMediaPlayer.reset();
                 new Handler().postDelayed(new Runnable() {
                     @Override
@@ -207,7 +207,7 @@ public class ExoVideoView extends FrameLayout implements MediaPlayerControl, Med
                         startPrepare(true);
                         isResetCount++;
                     }
-                }, 800);
+                }, 500);
             }else {
                 isResetCount=0;
                 setPlayState(STATE_ERROR);

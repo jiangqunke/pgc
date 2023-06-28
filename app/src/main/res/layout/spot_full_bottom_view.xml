@@ -53,9 +53,9 @@
 
         <RelativeLayout
             android:id="@+id/rl_progress"
-            android:layout_below="@+id/ll_progress_flag"
             android:layout_width="match_parent"
             android:layout_height="@dimen/dp_43"
+            android:layout_below="@+id/ll_progress_flag"
             android:background="@drawable/shape_gradient_video_bottom">
 
             <LinearLayout

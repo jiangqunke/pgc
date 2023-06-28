@@ -3,6 +3,7 @@ package com.bestv.pgc.ui;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -13,15 +14,16 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.OrientationHelper;
 
+import com.analysys.AnalysysAgent;
 import com.bestv.pgc.R;
+import com.bestv.pgc.beans.AnalysysBean;
 import com.bestv.pgc.beans.SpotBean;
 import com.bestv.pgc.databinding.ActivityPlayListBinding;
 import com.bestv.pgc.player.ExoVideoView;
 import com.bestv.pgc.preloader.ui.BestTVPreloadFuture;
-import com.bestv.pgc.preloader.ui.BestTVPreloader;
-import com.bestv.pgc.preloader.ui.BestTVPreloaderConfig;
 import com.bestv.pgc.refreshview.XRefreshView;
 import com.bestv.pgc.ui.view.PlayViewControl;
 import com.bestv.pgc.ui.view.TiktokLoadingView;
@@ -32,10 +34,13 @@ import com.bestv.pgc.util.UltimateBar;
 import com.blankj.utilcode.util.CollectionUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.blankj.utilcode.util.ToastUtils;
+import com.blankj.utilcode.util.Utils;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PlaylistActivity extends SlideBackActivity implements View.OnClickListener {
     ActivityPlayListBinding binding;
@@ -60,6 +65,10 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
     private String poi;
     private String scene;
     private String videoInfo;
+    private String analysysInfo;
+    private AnalysysBean analysysBean;
+    private String requestId;
+    private long count;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,7 +88,6 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         mFuture = new BestTVPreloadFuture(this, this.getClass().getSimpleName());
         initView();
         setUpData();
-
     }
 
 
@@ -88,15 +96,21 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         poi = getIntent().getStringExtra("poi");
         scene = getIntent().getStringExtra("scene");
         videoInfo = getIntent().getStringExtra("videoInfo");
-        viewModel.init(openId,poi,scene);
-        if (!TextUtils.isEmpty(videoInfo)){
-            Gson gson = new Gson();
+        analysysInfo = getIntent().getStringExtra("analysysInfo");
+        viewModel.init(openId, poi, scene);
+        Gson gson = new Gson();
+        if (!TextUtils.isEmpty(videoInfo)) {
             SpotBean bean = gson.fromJson(videoInfo, SpotBean.class);
             String qualityUrl = bean.getQualityUrl();
             if (!TextUtils.isEmpty(qualityUrl) && qualityUrl.toLowerCase().contains(".mp4")) {
                 mFuture.addUrl(qualityUrl);
             }
             mDatas.add(bean);
+        }
+        if (!TextUtils.isEmpty(analysysInfo)) {
+            Log.e("analysysBean", "analysysInfo=" + analysysInfo);
+            analysysBean = gson.fromJson(analysysInfo, AnalysysBean.class);
+            requestId = analysysBean.getRequest_id();
         }
         tiktokPageAdapter = new VideoAdapter(this, mDatas);
         mLayoutManager = new PagerLayoutManager(this, OrientationHelper.VERTICAL);
@@ -128,7 +142,20 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
             @Override
             public void onPageRelease(boolean isNext, int position, View view) {
                 if (currentPosition == position) {
-                    releaseVideo(view);
+//                    releaseVideo(view);
+                    if (playViewControl != null) {
+                        if (!CollectionUtils.isEmpty(mDatas) && mDatas.size() > currentPosition) {
+                            try {
+                                videoClose(mDatas.get(currentPosition));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (playViewControl != null) {
+                            playViewControl.resetSeekProgress();
+                        }
+                    }
+                    stopPlay();
                 }
             }
         });
@@ -201,7 +228,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
 
             @Override
             public void userPraise(boolean isPraise, String titleId) {
-                viewModel.praise(isPraise,titleId);
+                viewModel.praise(isPraise, titleId);
             }
 
         });
@@ -250,6 +277,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
             }
         });
         viewModel.loadSpotDatas();
+
         viewModel.pgcData.observe(this, new Observer<SpotBean>() {
             @Override
             public void onChanged(SpotBean s) {
@@ -259,7 +287,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         viewModel.praiseData.observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean isPraise) {
-                if (playViewControl != null){
+                if (playViewControl != null) {
                     playViewControl.updatePraiseState(isPraise);
                 }
             }
@@ -268,7 +296,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
             @Override
             public void onChanged(Void unused) {
                 try {
-                    if ( binding.xrefreshview != null){
+                    if (binding.xrefreshview != null) {
                         binding.xrefreshview.stopRefresh();
                         binding.xrefreshview.stopLoadMore();
                     }
@@ -278,7 +306,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                         binding.tvNo.setText("这里空空如也，去其他地方转转吧～");
                         binding.llNo.setVisibility(View.VISIBLE);
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -286,13 +314,19 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         });
     }
 
+    public void scrollToOffsetPostion(int position) {
+        binding.recyclerView.scrollToPosition(position);
+        LinearLayoutManager mLayoutManager = (LinearLayoutManager) binding.recyclerView.getLayoutManager();
+        mLayoutManager.scrollToPositionWithOffset(position, 0);
+    }
+
     private void dealWithData(SpotBean bean) {
-        if ( binding.xrefreshview != null){
+        if (binding.xrefreshview != null) {
             binding.xrefreshview.stopRefresh();
             binding.xrefreshview.stopLoadMore();
         }
         if (CollectionUtils.isEmpty(bean.dt)) {
-            if (page == 0) {
+            if (page == 0 && CollectionUtils.isEmpty(mDatas)) {
                 if (binding.llNo != null) {
                     binding.tvNo.setTextColor(Color.parseColor("#FFFFFF"));
                     binding.ivNo.setImageResource(R.mipmap.bczy);
@@ -345,6 +379,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 spotBean = mDatas.get(position);
                 playViewControl.setCurSpeed(1.0f);
                 playViewControl.setVideoData(mDatas.get(position));
+                switchVideo(mDatas, position, position > currentPosition);
                 currentPosition = position;
                 SpotBean bean = mDatas.get(position);
                 bean.setPlayFinish(false);
@@ -358,6 +393,10 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 if (playViewControl != null) {
                     playViewControl.setFragmentVisible(isVisible);
                 }
+                if (count>0||TextUtils.isEmpty(videoInfo)){
+                    videoOpen(bean);
+                }
+                count++;
             }
         } catch (Throwable throwable) {
             throwable.printStackTrace();
@@ -369,7 +408,10 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         if (mVideoView != null) {
             mVideoView.stopPlayback();
             mVideoView.release();
+
+
         }
+
     }
 
     /**
@@ -433,6 +475,10 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         if (mFuture != null) {
             mFuture.onDestroy();
         }
+        if (playViewControl != null) {
+            playViewControl.stopPlayTimer();
+        }
+
 //        if (mVideoView != null){
 //            mVideoView.stopPlayback();
 //            mVideoView.release();
@@ -445,10 +491,10 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         isVisible = false;
         if (playViewControl != null) {
-            if (mVideoView != null){
+            if (mVideoView != null) {
                 mVideoView.pause();
             }
-//            playViewControl.pausePlayTimer();
+            playViewControl.pausePlayTimer();
             playViewControl.setFragmentVisible(false);
         }
         if (mFuture != null) {
@@ -470,5 +516,140 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        if (playViewControl != null) {
+            if (!CollectionUtils.isEmpty(mDatas) && mDatas.size() > currentPosition) {
+                try {
+                    videoClose(mDatas.get(currentPosition));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        stopPlay();
+    }
+
+
+    //埋点-开始播放
+    private void videoOpen(SpotBean spotBean) {
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("$title", "Metro大都会播放页");
+            if (analysysBean != null) {
+                map.put("refer_tab", !TextUtils.isEmpty(analysysBean.getRefer_tab()) ? analysysBean.getRefer_tab() : "0");
+                map.put("ex_id", !TextUtils.isEmpty(analysysBean.getEx_id()) ? analysysBean.getEx_id() : "0");
+                if (TextUtils.isEmpty(requestId)) {
+                    map.put("request_item_rank", currentPosition % 10);
+                } else {
+                    map.put("request_item_rank", analysysBean.getRequest_item_rank());
+                }
+            } else {
+                map.put("refer_tab", "0");
+                map.put("ex_id", "0");
+                map.put("request_item_rank", (currentPosition + 1) % 10);
+                map.put("request_id", "0");
+            }
+            map.put("request_id", TextUtils.isEmpty(requestId) ? viewModel.getRequestId() : requestId);
+            map.put("algo_info", "召回策略");
+            map.put("item_type", "单片视频");
+            map.put("item_id", TextUtils.isEmpty(spotBean.getTitleId()) ? "" : spotBean.getTitleId());
+            map.put("item_name", TextUtils.isEmpty(spotBean.getTitle()) ? "" : spotBean.getTitle());
+            map.put("video_id", TextUtils.isEmpty(spotBean.getTitleId()) ? "" : spotBean.getTitleId());
+            map.put("video_name", TextUtils.isEmpty(spotBean.getTitle()) ? "" : spotBean.getTitle());
+            map.put("video_length", spotBean.getDuration());
+            map.put("play_module", "点播");
+            map.put("start_video_length", 0);
+            Log.e("video_open", "video_open" + new Gson().toJson(map));
+            AnalysysAgent.track(this, "video_open", map);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //埋点-结束播放
+    private void videoClose(SpotBean spotBean) {
+        try {
+            long play_length = playViewControl.getPlay_length();
+            if (play_length == 0) return;
+            Map<String, Object> map = new HashMap<>();
+            map.put("$title", "Metro大都会播放页");
+            if (analysysBean != null) {
+                map.put("refer_tab", !TextUtils.isEmpty(analysysBean.getRefer_tab()) ? analysysBean.getRefer_tab() : "0");
+                map.put("ex_id", !TextUtils.isEmpty(analysysBean.getEx_id()) ? analysysBean.getEx_id() : "0");
+                if (TextUtils.isEmpty(requestId)) {
+                    map.put("request_item_rank", currentPosition % 10);
+                } else {
+                    map.put("request_item_rank", analysysBean.getRequest_item_rank());
+                }
+
+            } else {
+                map.put("refer_tab", "0");
+                map.put("ex_id", "0");
+                map.put("request_id", "0");
+                map.put("request_item_rank", (currentPosition + 1) % 10);
+            }
+
+            map.put("algo_info", "召回策略");
+            map.put("item_type", "单片视频");
+            map.put("item_id", TextUtils.isEmpty(spotBean.getTitleId()) ? "" : spotBean.getTitleId());
+            map.put("item_name", TextUtils.isEmpty(spotBean.getTitle()) ? "" : spotBean.getTitle());
+            map.put("video_id", TextUtils.isEmpty(spotBean.getTitleId()) ? "" : spotBean.getTitleId());
+            map.put("video_name", TextUtils.isEmpty(spotBean.getTitle()) ? "" : spotBean.getTitle());
+            map.put("video_length", spotBean.getDuration());
+            map.put("play_module", "点播");
+            map.put("start_video_length", 0);
+            int end_video_length = (int) (mVideoView.getCurrentPosition() / 1000.0f);
+            map.put("end_video_length", end_video_length);
+
+            map.put("play_length", playViewControl.getPlay_length());
+            map.put("play_percent", (int) ((end_video_length * 1.0f / spotBean.getDuration()) * 100));
+            Log.e("video_close", "video_close" + new Gson().toJson(map));
+
+            AnalysysAgent.track(this, "video_close", map);
+            requestId = "";
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //埋点-切换视频
+    protected boolean isChangeVideo;//是否切换视频
+
+    private void switchVideo(List<SpotBean> datas, int currentPosition, boolean isUp) {
+        try {
+            if (CollectionUtils.isEmpty(datas)) return;
+            Map<String, Object> map = new HashMap<>();
+            if (currentPosition == 0 && !isChangeVideo) {
+                return;
+            } else {
+                if (datas.size() > currentPosition) {
+                    SpotBean preData = datas.get(isUp ? (currentPosition - 1) : (currentPosition + 1));
+                    if (preData != null) {
+                        map.put("video_id_before", preData.getTitleId());
+                        map.put("video_name_before", preData.getTitle());
+                    } else {
+                        map.put("video_id_before", "0");
+                        map.put("video_name_before", "0");
+                    }
+                    SpotBean curData = datas.get(currentPosition);
+                    if (curData != null) {
+                        map.put("video_id", curData.getTitleId());
+                        map.put("video_name", curData.getTitle());
+                    } else {
+                        map.put("video_id", "0");
+                        map.put("video_name", "0");
+                    }
+                } else {
+                    map.put("video_id_before", "0");
+                    map.put("video_name_before", "0");
+                }
+                isChangeVideo = true;
+                map.put("type", isUp ? "向上滑动" : "向下滑动");
+            }
+            map.put("switch_id", openId + "_" + System.currentTimeMillis());
+            Log.e("switch_video", "switch_video" + new Gson().toJson(map));
+            AnalysysAgent.track(this, "switch_video", map);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

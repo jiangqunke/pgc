@@ -1,7 +1,7 @@
 package com.bestv.pgc.ui;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -11,27 +11,33 @@ import com.bestv.pgc.beans.SpotBean;
 import com.bestv.pgc.net.ApiUrl;
 import com.bestv.pgc.net.OkHttpUtils;
 import com.bestv.pgc.net.OnResultCallBack;
+import com.bestv.pgc.util.BestvAgent;
 import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlayViewModel extends ViewModel implements DefaultLifecycleObserver {
+public class PlayViewModel extends ViewModel implements LifecycleObserver {
     MutableLiveData<SpotBean> pgcData = new MutableLiveData<>();
     MutableLiveData<Void> failData = new MutableLiveData<>();
     MutableLiveData<Boolean> praiseData = new MutableLiveData<>();
     private String openId;
     private String poi;
     private String scene;
+    private String requestId;
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
+    }
+
     public void init(String openId, String poi, String scene){
         this.openId = openId;
         this.poi = poi;
         this.scene = scene;
-    }
-    @Override
-    public void onCreate(@NonNull LifecycleOwner owner) {
-        DefaultLifecycleObserver.super.onCreate(owner);
-
     }
 
     public void loadSpotDatas() {
@@ -40,7 +46,9 @@ public class PlayViewModel extends ViewModel implements DefaultLifecycleObserver
         params.put("poi", poi);
         params.put("scene", scene);
         params.put("limit", "10");
-        params.put("requestId", openId+System.currentTimeMillis());
+        requestId = openId+System.currentTimeMillis();
+        params.put("requestId", requestId);
+
         OkHttpUtils.getInstance().post(ApiUrl.pgc_list, params, new OnResultCallBack<SpotBean>() {
             @Override
             public void onResponse(SpotBean data) {
@@ -62,6 +70,9 @@ public class PlayViewModel extends ViewModel implements DefaultLifecycleObserver
             @Override
             public void onResponse(Entity data) {
                 praiseData.setValue(!isPraise);
+                if (BestvAgent.getInstance().getPariseListening() != null){
+                    BestvAgent.getInstance().getPariseListening().pariseState(titleId,!isPraise);
+                }
             }
 
             @Override

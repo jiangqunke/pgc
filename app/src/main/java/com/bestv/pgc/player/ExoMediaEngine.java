@@ -11,8 +11,9 @@ import android.view.SurfaceHolder;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Renderer;
@@ -21,15 +22,16 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.ExoTrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.Allocator;
-import com.google.android.exoplayer2.video.VideoListener;
+import com.google.android.exoplayer2.video.VideoSize;
 
 import java.util.Map;
 
-public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Player.EventListener{
-    protected SimpleExoPlayer mMediaPlayer;
+public class ExoMediaEngine extends AbstractPlayer implements Player.Listener {
+    protected ExoPlayer mMediaPlayer;
     private Context context;
     protected ExoMediaSourceHelper mMediaSourceHelper;
     private LoadControl mLoadControl;
@@ -43,26 +45,28 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
     private Surface mSurface;
     protected MediaSource mMediaSource;
     private Handler mHandler = new Handler(Looper.getMainLooper());
+
     public ExoMediaEngine(Context context) {
         this.context = context;
         mMediaSourceHelper = new ExoMediaSourceHelper(context);
     }
+
     @Override
     public void initPlayer() {
         mLoadControl = new LoadControlWrapper(mLoadControl == null ? new DefaultLoadControl() : mLoadControl);
         mRenderersFactory = mRenderersFactory == null ? new DefaultRenderersFactory(context) : mRenderersFactory;
         mTrackSelector = mTrackSelector == null ? new DefaultTrackSelector(context) : mTrackSelector;
 //        mMediaPlayer = ExoPlayerFactory.newSimpleInstance(context, mRenderersFactory, mTrackSelector, mLoadControl);
-        mMediaPlayer = new SimpleExoPlayer.Builder(context).setLoadControl(mLoadControl).build();
+        mMediaPlayer = new ExoPlayer.Builder(context).setLoadControl(mLoadControl).build();
+
+//        mMediaPlayer = new SimpleExoPlayer.Builder(context).setLoadControl(mLoadControl).build();
         mMediaPlayer.addListener(this);
-        mMediaPlayer.addVideoListener(this);
         setOptions();
     }
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
-        mMediaSource = mMediaSourceHelper.getMediaSource(path);
-        mMediaSourceHelper.setHeaders(headers);
+        mMediaSource = mMediaSourceHelper.getMediaSource(path,headers);
     }
 
     @Override
@@ -110,7 +114,10 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
     @Override
     public void reset() {
         if (mMediaPlayer != null) {
-            mMediaPlayer.stop(false);
+            mMediaPlayer.stop();
+            mMediaPlayer.clearMediaItems();
+            mMediaPlayer.setVideoSurface(null);
+            mIsPreparing = false;
         }
     }
 
@@ -142,15 +149,7 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
         try {
             if (mMediaPlayer != null) {
                 mMediaPlayer.removeListener(this);
-                mMediaPlayer.removeVideoListener(this);
-                final SimpleExoPlayer player = mMediaPlayer;
-                new Thread() {
-                    @Override
-                    public void run() {
-                        //异步释放，防止卡顿
-                        player.release();
-                    }
-                }.start();
+                mMediaPlayer.release();
                 mMediaPlayer = null;
             }
 
@@ -162,7 +161,7 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
             mLastReportedPlaybackState = Player.STATE_IDLE;
             mLastReportedPlayWhenReady = false;
             mSpeedPlaybackParameters = null;
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -240,47 +239,52 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
     public long getTcpSpeed() {
         return 0;
     }
+
+
     @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+    public void onPlaybackStateChanged( int playbackState) {
         if (mPlayerEventListener == null) return;
-        if (mIsPreparing) return;
-        if (mLastReportedPlayWhenReady != playWhenReady || mLastReportedPlaybackState != playbackState) {
-            switch (playbackState) {
-                case Player.STATE_BUFFERING:
-                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, getBufferedPercentage());
-                    mIsBuffering = true;
-                    break;
-                case Player.STATE_READY:
-                    if (mIsBuffering) {
-                        mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
-                        mIsBuffering = false;
-                    }
-                    break;
-                case Player.STATE_ENDED:
-                    mPlayerEventListener.onCompletion();
-                    break;
+        if (mIsPreparing) {
+            if (playbackState == Player.STATE_READY) {
+                mPlayerEventListener.onPrepared();
+                mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_RENDERING_START, 0);
+                mIsPreparing = false;
             }
-            mLastReportedPlaybackState = playbackState;
-            mLastReportedPlayWhenReady = playWhenReady;
+            return;
+        }
+        switch (playbackState) {
+            case Player.STATE_BUFFERING:
+                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, getBufferedPercentage());
+                break;
+            case Player.STATE_READY:
+                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
+                break;
+            case Player.STATE_ENDED:
+                mPlayerEventListener.onCompletion();
+                break;
+            case Player.STATE_IDLE:
+                break;
         }
     }
 
-    @Override
-    public void onPlayerError(ExoPlaybackException error) {
-        if (mPlayerEventListener != null) {
-            mPlayerEventListener.onError();
-        }
-    }
 
-    @Override
-    public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-        if (mPlayerEventListener != null) {
-            mPlayerEventListener.onVideoSizeChanged(width, height);
-            if (unappliedRotationDegrees > 0) {
-                mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_ROTATION_CHANGED, unappliedRotationDegrees);
-            }
-        }
-    }
+//    @Override
+//    public void onPlayerError(ExoPlaybackException error) {
+//        if (mPlayerEventListener != null) {
+//            mPlayerEventListener.onError();
+//        }
+//    }
+//
+//    @Override
+//    public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+//        if (mPlayerEventListener != null) {
+//            mPlayerEventListener.onVideoSizeChanged(width, height);
+//            if (unappliedRotationDegrees > 0) {
+//                mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_ROTATION_CHANGED, unappliedRotationDegrees);
+//            }
+//        }
+//    }
+
 
     @Override
     public void onRenderedFirstFrame() {
@@ -289,12 +293,29 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
             mIsPreparing = false;
         }
     }
+
     public void handlerTouch(MotionEvent event) {
     }
 
-    /**
-     * LoadControl包装类。用来监听onPrepared状态
-     */
+    @Override
+    public void onPlayerError(PlaybackException error) {
+        Player.Listener.super.onPlayerError(error);
+        if (mPlayerEventListener != null) {
+            mPlayerEventListener.onError();
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(VideoSize videoSize) {
+        Player.Listener.super.onVideoSizeChanged(videoSize);
+        if (mPlayerEventListener != null) {
+            mPlayerEventListener.onVideoSizeChanged(videoSize.width, videoSize.height);
+        }
+    }
+
+    //    /**
+//     * LoadControl包装类。用来监听onPrepared状态
+//     */
     private class LoadControlWrapper implements LoadControl {
 
         private LoadControl mLoadControl;
@@ -318,9 +339,10 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
         }
 
         @Override
-        public void onTracksSelected(Renderer[] renderers, TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+        public void onTracksSelected(Renderer[] renderers, TrackGroupArray trackGroups, ExoTrackSelection[] trackSelections) {
             mLoadControl.onTracksSelected(renderers, trackGroups, trackSelections);
         }
+
 
         @Override
         public void onStopped() {
@@ -348,13 +370,14 @@ public class ExoMediaEngine extends AbstractPlayer implements VideoListener, Pla
         }
 
         @Override
-        public boolean shouldContinueLoading(long bufferedDurationUs, float playbackSpeed) {
-            return mLoadControl.shouldContinueLoading(bufferedDurationUs, playbackSpeed);
+        public boolean shouldContinueLoading(long playbackPositionUs, long bufferedDurationUs, float playbackSpeed) {
+            return mLoadControl.shouldContinueLoading(playbackPositionUs, bufferedDurationUs, playbackSpeed);
         }
 
         @Override
-        public boolean shouldStartPlayback(long bufferedDurationUs, float playbackSpeed, boolean rebuffering) {
-            return mLoadControl.shouldStartPlayback(bufferedDurationUs, playbackSpeed, rebuffering);
+        public boolean shouldStartPlayback(long bufferedDurationUs, float playbackSpeed, boolean rebuffering, long targetLiveOffsetUs) {
+            return mLoadControl.shouldStartPlayback(bufferedDurationUs, playbackSpeed, rebuffering, targetLiveOffsetUs);
         }
     }
+
 }
