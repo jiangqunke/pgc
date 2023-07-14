@@ -2,10 +2,13 @@ package com.bestv.pgc.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 
 import com.bestv.pgc.net.ApiUrl;
 import com.bestv.pgc.preloader.ui.BestTVPreloader;
 import com.bestv.pgc.preloader.ui.BestTVPreloaderConfig;
+import com.bestv.pgc.ui.PlayHotViewModel;
+import com.bestv.pgc.ui.PlayHotlistActivity;
 import com.bestv.pgc.ui.PlaylistActivity;
 
 public class BestvAgent {
@@ -88,6 +91,18 @@ public class BestvAgent {
         intent.putExtra("scene", scene);
         intent.putExtra("analysysInfo", analysysInfo);
         intent.putExtra("videoInfo", videoJsonInfo);
+        intent.setClass(context, PlayHotlistActivity.class);
+        context.startActivity(intent);
+    }
+
+    public void playLineVideo(Context context, String openId, String line,int offset, String videoJsonInfo,String analysysInfo,OnPariseListening listening) {
+        this.pariseListening = listening;
+        Intent intent = new Intent();
+        intent.putExtra("openId", openId);
+        intent.putExtra("line", line);
+        intent.putExtra("analysysInfo", analysysInfo);
+        intent.putExtra("videoInfo", videoJsonInfo);
+        intent.putExtra("page", offset);
         intent.setClass(context, PlaylistActivity.class);
         context.startActivity(intent);
     }

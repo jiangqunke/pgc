@@ -1,8 +1,6 @@
 package com.bestv.pgc.ui;
 
-import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -12,17 +10,17 @@ import com.bestv.pgc.net.ApiUrl;
 import com.bestv.pgc.net.OkHttpUtils;
 import com.bestv.pgc.net.OnResultCallBack;
 import com.bestv.pgc.util.BestvAgent;
-import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlayViewModel extends ViewModel implements LifecycleObserver {
+public class PlayHotViewModel extends ViewModel implements LifecycleObserver {
     MutableLiveData<SpotBean> pgcData = new MutableLiveData<>();
     MutableLiveData<Void> failData = new MutableLiveData<>();
     MutableLiveData<Boolean> praiseData = new MutableLiveData<>();
     private String openId;
-    private String line;
+    private String poi;
+    private String scene;
     private String requestId;
 
     public String getRequestId() {
@@ -33,21 +31,22 @@ public class PlayViewModel extends ViewModel implements LifecycleObserver {
         this.requestId = requestId;
     }
 
-    public void init(String openId, String line){
+    public void init(String openId, String poi, String scene){
         this.openId = openId;
-        this.line = line;
+        this.poi = poi;
+        this.scene = scene;
     }
 
-    public void loadSpotDatas(int page) {
+    public void loadSpotDatas() {
         Map<String, Object> params = new HashMap<>();
         params.put("openId", openId);
-        params.put("line", line);
-        params.put("offset", page);
-        params.put("limit", "15");
+        params.put("poi", poi);
+        params.put("scene", scene);
+        params.put("limit", "10");
         requestId = openId+System.currentTimeMillis();
         params.put("requestId", requestId);
 
-        OkHttpUtils.getInstance().post(ApiUrl.pgc_line_list, params, new OnResultCallBack<SpotBean>() {
+        OkHttpUtils.getInstance().post(ApiUrl.pgc_list, params, new OnResultCallBack<SpotBean>() {
             @Override
             public void onResponse(SpotBean data) {
                 pgcData.setValue(data);
@@ -62,7 +61,7 @@ public class PlayViewModel extends ViewModel implements LifecycleObserver {
 
     public void praise(boolean isPraise, String titleId) {
         Map<String, Object> params = new HashMap<>();
-        params.put("mcUserId",openId);
+        params.put("mcUserId", openId);
         params.put("titleId", titleId);
         OkHttpUtils.getInstance().post(isPraise ? ApiUrl.URl_video_cancel_praise : ApiUrl.URl_video_praise, params, new OnResultCallBack<Entity>() {
             @Override

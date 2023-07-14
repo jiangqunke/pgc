@@ -34,7 +34,6 @@ import com.bestv.pgc.util.UltimateBar;
 import com.blankj.utilcode.util.CollectionUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.blankj.utilcode.util.ToastUtils;
-import com.blankj.utilcode.util.Utils;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -42,9 +41,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PlaylistActivity extends SlideBackActivity implements View.OnClickListener {
+public class PlayHotlistActivity extends SlideBackActivity implements View.OnClickListener {
     ActivityPlayListBinding binding;
-    private PlayViewModel viewModel;
+    private PlayHotViewModel viewModel;
     private VideoAdapter tiktokPageAdapter;
     private List<SpotBean> mDatas = new ArrayList<>();
     private PagerLayoutManager mLayoutManager;
@@ -62,15 +61,13 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
     private int page = 0;
     private boolean isNoMore = false;
     private String openId;
-    private String line;
+    private String poi;
+    private String scene;
     private String videoInfo;
     private String analysysInfo;
     private AnalysysBean analysysBean;
     private String requestId;
     private long count;
-    private long totalCount;
-    private boolean isFristData;
-    private  long totalPage;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,7 +82,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 .immersionBar();
         binding = ActivityPlayListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        viewModel = new ViewModelProvider(this).get(PlayViewModel.class);
+        viewModel = new ViewModelProvider(this).get(PlayHotViewModel.class);
         getLifecycle().addObserver(viewModel);
         mFuture = new BestTVPreloadFuture(this, this.getClass().getSimpleName());
         initView();
@@ -95,11 +92,11 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
 
     private void initView() {
         openId = getIntent().getStringExtra("openId");
-        line = getIntent().getStringExtra("line");
+        poi = getIntent().getStringExtra("poi");
+        scene = getIntent().getStringExtra("scene");
         videoInfo = getIntent().getStringExtra("videoInfo");
         analysysInfo = getIntent().getStringExtra("analysysInfo");
-        page = getIntent().getIntExtra("page",0);
-        viewModel.init(openId, line);
+        viewModel.init(openId, poi, scene);
         Gson gson = new Gson();
         if (!TextUtils.isEmpty(videoInfo)) {
             Log.e("analysysBean", "videoInfo=" + videoInfo);
@@ -132,9 +129,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 if (currentPosition == position) return;
                 if ((position > currentPosition && position + 2 == mDatas.size())) {
                     page++;
-                    if (page<=totalPage){
-                        viewModel.loadSpotDatas(page);
-                    }
+                    viewModel.loadSpotDatas();
 
                 }
                 playVideo(position, view);
@@ -273,16 +268,16 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 }
 
 //                if (AppVarManager.getInstance().getSpotPosition() == mDatas.size() - 1) {
-                if (isNoMore || page>totalPage) {
+                if (isNoMore ) {
                     binding.xrefreshview.stopLoadMore();
                     ToastUtils.showShort("已经是最后一条视频了");
                 } else {
                     page++;
-                    viewModel.loadSpotDatas(page);
+                    viewModel.loadSpotDatas();
                 }
             }
         });
-        viewModel.loadSpotDatas(page);
+        viewModel.loadSpotDatas();
 
         viewModel.pgcData.observe(this, new Observer<SpotBean>() {
             @Override
@@ -332,10 +327,8 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 binding.xrefreshview.stopRefresh();
                 binding.xrefreshview.stopLoadMore();
             }
-            totalCount = bean.count;
-            totalPage = totalCount%15==0?totalCount/15:(totalCount/15+1);
             if (CollectionUtils.isEmpty(bean.dt)) {
-                if ( CollectionUtils.isEmpty(mDatas)) {
+                if ( page == 0 &&CollectionUtils.isEmpty(mDatas)) {
                     if (binding.llNo != null) {
                         binding.tvNo.setTextColor(Color.parseColor("#FFFFFF"));
                         binding.ivNo.setImageResource(R.mipmap.bczy);
@@ -347,11 +340,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 }
             } else {
                 mDatas.addAll(bean.dt);
-                if (!isFristData){
-                    removeDuplicate(mDatas);
-                    isFristData = true;
-                }
-
+                removeDuplicate(mDatas);
                 tiktokPageAdapter.notifyDataSetChanged();
                 for (SpotBean spotBean : mDatas) {
                     String qualityUrl = spotBean.getQualityUrl();
@@ -625,7 +614,6 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 map.put("request_id", "0");
                 map.put("request_item_rank", (currentPosition + 1) % 10);
             }
-
             if (!TextUtils.isEmpty(spotBean.getAlgoInfo())){
                 map.put("algo_info",spotBean.getAlgoInfo());
             }

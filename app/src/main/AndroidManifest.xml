@@ -16,6 +16,12 @@
             android:configChanges="mcc|mnc|orientation|keyboardHidden|screenSize|locale|fontScale|layoutDirection|uiMode"
             android:launchMode="standard"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.PlayHotlistActivity"
+            android:configChanges="mcc|mnc|orientation|keyboardHidden|screenSize|locale|fontScale|layoutDirection|uiMode"
+            android:launchMode="standard"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

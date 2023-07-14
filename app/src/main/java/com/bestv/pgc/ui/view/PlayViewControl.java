@@ -918,7 +918,6 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
             return;
         }
         setupFounctionView(true);
-        if (isAnim) return;
         if (isPlaying && videoView.isPlaying()) {
 //            seekbar_scroll.setVisibility(VISIBLE);
 //            seekbar.setVisibility(GONE);
@@ -1267,17 +1266,21 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
 
     //埋点-用户点赞
     private void userLike(boolean isParise){
-        Map<String, Object> map = new HashMap<>();
-        map.put("$url", PlaylistActivity.class.getName());
-        map.put("$url_domain",  PlaylistActivity.class.getName());
-        map.put("$title",  "Metro大都会播放页");
-        map.put("tab",  "0");
-        map.put("gerneral_type",  "单片视频");
-        map.put("gerneral_id",  TextUtils.isEmpty(data.getTitleId())?"0":data.getTitleId());
-        map.put("gerneral_name",  TextUtils.isEmpty(data.getTitle())?"0":data.getTitle());
-        map.put("action", isParise? "点赞":"取消点赞");
-        Log.e("isParise_video", "isParise_video" + new Gson().toJson(map));
-        AnalysysAgent.track(context, "user_like", map);
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("$url", PlaylistActivity.class.getName());
+            map.put("$url_domain",  PlaylistActivity.class.getName());
+            map.put("$title",  "Metro大都会播放页");
+            map.put("tab",  "0");
+            map.put("gerneral_type",  "单片视频");
+            map.put("gerneral_id",  TextUtils.isEmpty(data.getTitleId())?"0":data.getTitleId());
+            map.put("gerneral_name",  TextUtils.isEmpty(data.getTitle())?"0":data.getTitle());
+            map.put("action", isParise? "点赞":"取消点赞");
+            Log.e("isParise_video", "isParise_video" + new Gson().toJson(map));
+            AnalysysAgent.track(context, "user_like", map);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void startPlayTimer() {
@@ -1324,6 +1327,5 @@ public class PlayViewControl extends RelativeLayout implements View.OnClickListe
             }
         };
     }
-
 
 }

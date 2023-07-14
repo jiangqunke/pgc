@@ -101,6 +101,15 @@ public class SpotBean extends Entity<ArrayList<SpotBean>> {
     private String pgcTaskName;
     private String pgcTaskUrl;
     private boolean isBesTv;
+    private String algoInfo;
+
+    public String getAlgoInfo() {
+        return algoInfo;
+    }
+
+    public void setAlgoInfo(String algoInfo) {
+        this.algoInfo = algoInfo;
+    }
 
     public boolean isBesTv() {
         return isBesTv;

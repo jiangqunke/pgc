@@ -6,6 +6,9 @@ public class ApiUrl {
 
 
     public static final String pgc_list = BestvAgent.getInstance().getUrl()+"/content/metroCity/internal/media/list";
+    public static final String pgc_line_list = BestvAgent.getInstance().getUrl()+"/content/metroCity/internal/media/lineDataList";
+
+
     /**
      * 用户取消点赞
      */
