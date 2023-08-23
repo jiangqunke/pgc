@@ -625,7 +625,7 @@ public class PlaylistActivity extends SlideBackActivity implements View.OnClickL
                 map.put("request_id", "0");
                 map.put("request_item_rank", (currentPosition + 1) % 10);
             }
-
+            map.put("request_id", TextUtils.isEmpty(requestId) ? viewModel.getRequestId() : requestId);
             if (!TextUtils.isEmpty(spotBean.getAlgoInfo())){
                 map.put("algo_info",spotBean.getAlgoInfo());
             }
